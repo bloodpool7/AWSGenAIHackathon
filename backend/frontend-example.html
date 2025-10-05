@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Onshape MCP Chat</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .header {
+            background: #2563eb;
+            color: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .header h1 { font-size: 1.5rem; }
+        .header p { opacity: 0.9; font-size: 0.875rem; margin-top: 0.25rem; }
+        .chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .message {
+            max-width: 70%;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            line-height: 1.5;
+        }
+        .message.user {
+            align-self: flex-end;
+            background: #2563eb;
+            color: white;
+        }
+        .message.assistant {
+            align-self: flex-start;
+            background: white;
+            color: #111827;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .message.loading {
+            align-self: flex-start;
+            background: white;
+            color: #6b7280;
+            font-style: italic;
+        }
+        .input-container {
+            background: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 -2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 1rem;
+        }
+        #messageInput {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            outline: none;
+        }
+        #messageInput:focus { border-color: #2563eb; }
+        #sendButton {
+            padding: 0.75rem 2rem;
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        #sendButton:hover { background: #1d4ed8; }
+        #sendButton:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+        .error {
+            background: #fef2f2;
+            color: #991b1b;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            border-left: 4px solid #dc2626;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🚀 Onshape MCP Chat</h1>
+        <p>Chat with Claude AI - Create CAD models with natural language</p>
+    </div>
+
+    <div class="chat-container" id="chatContainer">
+        <div class="message assistant">
+            👋 Hi! I'm Claude with Onshape MCP tools. Ask me to create STL files or CAD models, and I'll import them directly into Onshape!
+        </div>
+    </div>
+
+    <div class="input-container">
+        <input
+            type="text"
+            id="messageInput"
+            placeholder="Type a message... (e.g., 'Create a cube STL file')"
+            onkeypress="if(event.key === 'Enter') sendMessage()"
+        >
+        <button id="sendButton" onclick="sendMessage()">Send</button>
+    </div>
+
+    <script>
+        const BACKEND_URL = 'http://localhost:3001/api/chat';
+        let conversationHistory = [];
+
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+
+            if (!message) return;
+
+            // Disable input
+            input.disabled = true;
+            document.getElementById('sendButton').disabled = true;
+
+            // Add user message to chat
+            addMessage(message, 'user');
+            input.value = '';
+
+            // Add loading indicator
+            const loadingDiv = addMessage('Claude is thinking...', 'loading');
+
+            try {
+                const response = await fetch(BACKEND_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        message,
+                        conversationHistory
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                // Remove loading indicator
+                loadingDiv.remove();
+
+                // Add assistant response
+                addMessage(data.message, 'assistant');
+
+                // Update conversation history
+                conversationHistory = data.conversationHistory;
+
+            } catch (error) {
+                loadingDiv.remove();
+                addMessage(`❌ Error: ${error.message}. Make sure the backend is running on port 3001.`, 'error');
+                console.error('Error:', error);
+            }
+
+            // Re-enable input
+            input.disabled = false;
+            document.getElementById('sendButton').disabled = false;
+            input.focus();
+        }
+
+        function addMessage(text, type) {
+            const container = document.getElementById('chatContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            messageDiv.textContent = text;
+            container.appendChild(messageDiv);
+            container.scrollTop = container.scrollHeight;
+            return messageDiv;
+        }
+    </script>
+</body>
+</html>
