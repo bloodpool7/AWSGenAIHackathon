@@ -1,3 +1,32 @@
-node_modules
-dist
+# Dependencies
+node_modules/
+dist/
+
+# Environment files with secrets
+start-backend.sh
 .env
+.env.local
+
+# AWS credentials (should be in ~/.aws/)
+.aws/
+
+# Build outputs
+*.js
+*.js.map
+*.d.ts
+!cdk.out/**/*.js
+
+# IDE
+.vscode/
+.idea/
+
+# Next.js
+frontend/.next/
+frontend/out/
+
+# CDK
+cdk.out/
+*.js.out
+
+# OS
+.DS_Store

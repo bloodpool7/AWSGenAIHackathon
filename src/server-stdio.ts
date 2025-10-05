@@ -110,8 +110,9 @@ async function startServer() {
 
         try {
             const params = request.params.arguments as any;
-            const docName = params.documentName ?? `AI Model ${new Date().toISOString()}`;
+            const docName = params.document_name ?? params.documentName ?? `AI Model ${new Date().toISOString()}`;
             const fileName = params.filename ?? "model.stl";
+            const stlContent = params.stl_content ?? params.stl;
 
             // Create document
             const doc = await onshapeApiRequest<DocumentResponse>("POST", "/documents", {
@@ -121,7 +122,7 @@ async function startServer() {
 
             // Upload STL blob
             const form = new FormData();
-            form.append("file", Buffer.from(params.stl), {
+            form.append("file", Buffer.from(stlContent), {
                 filename: fileName,
                 contentType: "application/octet-stream",
             });
