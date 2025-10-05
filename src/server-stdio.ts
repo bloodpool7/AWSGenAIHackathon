@@ -1,8 +1,7 @@
 #!/usr/bin/env node
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { ListToolsRequestSchema, CallToolRequestSchema } from "@modelcontextprotocol/sdk/types.js";
-import express, { Request, Response } from "express";
 import fetch from "node-fetch";
 import FormData from "form-data";
 import "dotenv/config";
@@ -160,39 +159,20 @@ async function startServer() {
                 content: [
                     {
                         type: "text",
-                        text: `🎉 Imported STL into Onshape!`,
+                        text: `Error: ${err.message}`,
                     },
                 ],
+                isError: true,
             };
         }
     });
 
-    // Create Express app
-    const app = express();
-    app.use(express.json());
-
-    // SSE endpoint
-    app.get("/sse", async (req: Request, res: Response) => {
-        console.log("New SSE connection");
-        const transport = new SSEServerTransport("/messages", res);
-        await server.connect(transport);
-    });
-
-    // Message endpoint
-    app.post("/messages", async (req: Request, res: Response) => {
-        // Handle post messages - this is managed by the transport
-        res.status(200).send();
-    });
-
-    // Health check
-    app.get("/health", (req: Request, res: Response) => {
-        res.status(200).json({ status: "ok" });
-    });
-
-    const PORT = process.env.PORT || 3000;
-    app.listen(PORT, () => {
-        console.log(`MCP server listening on port ${PORT}`);
-    });
+    // Use stdio transport for Claude Desktop
+    const transport = new StdioServerTransport();
+    await server.connect(transport);
+    
+    console.error("Onshape MCP Server running on stdio");
 }
 
 startServer().catch(console.error);
+
