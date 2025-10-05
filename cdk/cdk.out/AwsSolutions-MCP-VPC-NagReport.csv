@@ -1,5 +1,0 @@
-Rule ID,Resource ID,Compliance,Exception Reason,Rule Level,Rule Info
-"AwsSolutions-VPC7","MCP-VPC/MCP-VPC/Resource","Compliant","N/A","Error","The VPC does not have an associated Flow Log."
-"AwsSolutions-IAM4","MCP-VPC/MCP-VPC/VpcFlowLog/IAMRole/Resource","Compliant","N/A","Error","The IAM user, role, or group uses AWS managed policies."
-"AwsSolutions-IAM5","MCP-VPC/MCP-VPC/VpcFlowLog/IAMRole/Resource","Compliant","N/A","Error","The IAM entity contains wildcard permissions and does not have a cdk-nag rule suppression with evidence for those permission."
-"AwsSolutions-IAM5","MCP-VPC/MCP-VPC/VpcFlowLog/IAMRole/DefaultPolicy/Resource","Compliant","N/A","Error","The IAM entity contains wildcard permissions and does not have a cdk-nag rule suppression with evidence for those permission."
