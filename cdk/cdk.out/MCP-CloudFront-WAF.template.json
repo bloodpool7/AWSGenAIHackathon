@@ -1,0 +1,406 @@
+{
+ "Resources": {
+  "MCPCloudFrontWAF": {
+   "Type": "AWS::WAFv2::WebACL",
+   "Properties": {
+    "DefaultAction": {
+     "Allow": {}
+    },
+    "Name": "mcp-cloudfront-waf-c8adc83b",
+    "Rules": [
+     {
+      "Action": {
+       "Allow": {}
+      },
+      "Name": "AllowOAuthEndpoints",
+      "Priority": 1,
+      "Statement": {
+       "OrStatement": {
+        "Statements": [
+         {
+          "ByteMatchStatement": {
+           "FieldToMatch": {
+            "UriPath": {}
+           },
+           "PositionalConstraint": "EXACTLY",
+           "SearchString": "/register",
+           "TextTransformations": [
+            {
+             "Priority": 0,
+             "Type": "NONE"
+            }
+           ]
+          }
+         },
+         {
+          "ByteMatchStatement": {
+           "FieldToMatch": {
+            "UriPath": {}
+           },
+           "PositionalConstraint": "EXACTLY",
+           "SearchString": "/authorize",
+           "TextTransformations": [
+            {
+             "Priority": 0,
+             "Type": "NONE"
+            }
+           ]
+          }
+         },
+         {
+          "ByteMatchStatement": {
+           "FieldToMatch": {
+            "UriPath": {}
+           },
+           "PositionalConstraint": "EXACTLY",
+           "SearchString": "/token",
+           "TextTransformations": [
+            {
+             "Priority": 0,
+             "Type": "NONE"
+            }
+           ]
+          }
+         }
+        ]
+       }
+      },
+      "VisibilityConfig": {
+       "CloudWatchMetricsEnabled": true,
+       "MetricName": "AllowOAuthEndpoints",
+       "SampledRequestsEnabled": true
+      }
+     },
+     {
+      "Name": "AWS-AWSManagedRulesCommonRuleSet",
+      "OverrideAction": {
+       "None": {}
+      },
+      "Priority": 10,
+      "Statement": {
+       "ManagedRuleGroupStatement": {
+        "ExcludedRules": [
+         {
+          "Name": "NoUserAgent_HEADER"
+         },
+         {
+          "Name": "UserAgent_BadBots_HEADER"
+         }
+        ],
+        "Name": "AWSManagedRulesCommonRuleSet",
+        "VendorName": "AWS"
+       }
+      },
+      "VisibilityConfig": {
+       "CloudWatchMetricsEnabled": true,
+       "MetricName": "AWS-AWSManagedRulesCommonRuleSet",
+       "SampledRequestsEnabled": true
+      }
+     },
+     {
+      "Action": {
+       "Block": {}
+      },
+      "Name": "RateLimitRule",
+      "Priority": 20,
+      "Statement": {
+       "RateBasedStatement": {
+        "AggregateKeyType": "IP",
+        "Limit": 3000
+       }
+      },
+      "VisibilityConfig": {
+       "CloudWatchMetricsEnabled": true,
+       "MetricName": "RateLimitRule",
+       "SampledRequestsEnabled": true
+      }
+     }
+    ],
+    "Scope": "CLOUDFRONT",
+    "Tags": [
+     {
+      "Key": "Project",
+      "Value": "MCP-Servers-On-AWS"
+     }
+    ],
+    "VisibilityConfig": {
+     "CloudWatchMetricsEnabled": true,
+     "MetricName": "MCPCloudFrontWAF",
+     "SampledRequestsEnabled": true
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "MCP-CloudFront-WAF/MCPCloudFrontWAF"
+   }
+  },
+  "CloudFrontWafArnParameterCAF1D9E4": {
+   "Type": "AWS::SSM::Parameter",
+   "Properties": {
+    "Description": "ARN of the CloudFront WAF Web ACL",
+    "Name": "/mcp/cloudfront-waf-arn-c8adc83b",
+    "Tags": {
+     "Project": "MCP-Servers-On-AWS"
+    },
+    "Type": "String",
+    "Value": {
+     "Fn::GetAtt": [
+      "MCPCloudFrontWAF",
+      "Arn"
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "MCP-CloudFront-WAF/CloudFrontWafArnParameter/Resource"
+   }
+  },
+  "CrossRegionWafSyncFunctionServiceRole85D2F043": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ],
+    "Tags": [
+     {
+      "Key": "Project",
+      "Value": "MCP-Servers-On-AWS"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "MCP-CloudFront-WAF/CrossRegionWafSyncFunction/ServiceRole/Resource",
+    "cdk_nag": {
+     "rules_to_suppress": [
+      {
+       "reason": "Lambda function used by CloudFront WAF cross-region sync custom resource requires CloudWatch logs access",
+       "id": "AwsSolutions-IAM4",
+       "applies_to": [
+        "Policy::arn:<AWS::Partition>:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      },
+      {
+       "reason": "Lambda function used by CloudFront WAF cross-region sync custom resource requires access to SSM parameters using consistent prefix for WAF ARN storage",
+       "id": "AwsSolutions-IAM5",
+       "applies_to": [
+        "Resource::arn:aws:ssm:us-east-1:<AWS::AccountId>:parameter/mcp/cloudfront-waf-*"
+       ]
+      }
+     ]
+    }
+   }
+  },
+  "CrossRegionWafSyncFunctionServiceRoleDefaultPolicy8C3D26D7": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": "ssm:PutParameter",
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::Join": [
+         "",
+         [
+          "arn:aws:ssm:us-east-1:",
+          {
+           "Ref": "AWS::AccountId"
+          },
+          ":parameter/mcp/cloudfront-waf-*"
+         ]
+        ]
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "CrossRegionWafSyncFunctionServiceRoleDefaultPolicy8C3D26D7",
+    "Roles": [
+     {
+      "Ref": "CrossRegionWafSyncFunctionServiceRole85D2F043"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "MCP-CloudFront-WAF/CrossRegionWafSyncFunction/ServiceRole/DefaultPolicy/Resource",
+    "cdk_nag": {
+     "rules_to_suppress": [
+      {
+       "reason": "Lambda function used by CloudFront WAF cross-region sync custom resource requires CloudWatch logs access",
+       "id": "AwsSolutions-IAM4",
+       "applies_to": [
+        "Policy::arn:<AWS::Partition>:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      },
+      {
+       "reason": "Lambda function used by CloudFront WAF cross-region sync custom resource requires access to SSM parameters using consistent prefix for WAF ARN storage",
+       "id": "AwsSolutions-IAM5",
+       "applies_to": [
+        "Resource::arn:aws:ssm:us-east-1:<AWS::AccountId>:parameter/mcp/cloudfront-waf-*"
+       ]
+      }
+     ]
+    }
+   }
+  },
+  "CrossRegionWafSyncFunction89FCBCD2": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "ZipFile": "\nconst https = require('https');\nconst url = require('url');\n\n// AWS SDK v3 is available in the Lambda runtime\nconst { SSMClient, PutParameterCommand } = require('@aws-sdk/client-ssm');\n\nexports.handler = async function(event, context) {\n  console.log('Event:', JSON.stringify(event, null, 2));\n  \n  try {\n    // For CREATE and UPDATE events, we need to sync the parameter\n    if (event.RequestType === 'Create' || event.RequestType === 'Update') {\n      const props = event.ResourceProperties;\n      const webAclId = props.WebAclId;\n      const webAclArn = props.WebAclArn;\n      const parameterName = props.ParameterName;\n      const targetRegion = props.TargetRegion;\n      \n      console.log('WebACL ID:', webAclId);\n      console.log('WebACL ARN:', webAclArn);\n      console.log('Parameter Name:', parameterName);\n      console.log('Target Region:', targetRegion);\n      \n      // Update the SSM parameter in the target region\n      const ssmClient = new SSMClient({ region: targetRegion });\n      const putParameterCommand = new PutParameterCommand({\n        Name: parameterName,\n        Value: webAclArn, // Just store the ARN directly\n        Type: 'String',\n        Overwrite: true\n      });\n      \n      await ssmClient.send(putParameterCommand);\n      console.log('Parameter updated successfully in region', targetRegion);\n    }\n    \n    // Send success response back to CloudFormation\n    await sendResponse(event, context, 'SUCCESS', { Message: 'Operation completed successfully' });\n  } catch (error) {\n    console.error('Error:', error);\n    await sendResponse(event, context, 'FAILED', { Error: error.message });\n  }\n};\n\n// Helper function to send response to CloudFormation\nasync function sendResponse(event, context, responseStatus, responseData) {\n  const responseBody = JSON.stringify({\n    Status: responseStatus,\n    Reason: responseStatus === 'FAILED' ? 'See the details in CloudWatch Log Stream: ' + context.logStreamName : 'See the details in CloudWatch Log Stream',\n    PhysicalResourceId: context.logStreamName,\n    StackId: event.StackId,\n    RequestId: event.RequestId,\n    LogicalResourceId: event.LogicalResourceId,\n    NoEcho: false,\n    Data: responseData\n  });\n  \n  console.log('Response body:', responseBody);\n  \n  const parsedUrl = url.parse(event.ResponseURL);\n  \n  const options = {\n    hostname: parsedUrl.hostname,\n    port: 443,\n    path: parsedUrl.path,\n    method: 'PUT',\n    headers: {\n      'Content-Type': '',\n      'Content-Length': responseBody.length\n    }\n  };\n  \n  return new Promise((resolve, reject) => {\n    const request = https.request(options, function(response) {\n      console.log('Status code:', response.statusCode);\n      resolve();\n    });\n    \n    request.on('error', function(error) {\n      console.log('send response error:', error);\n      reject(error);\n    });\n    \n    request.write(responseBody);\n    request.end();\n  });\n}\n        "
+    },
+    "FunctionName": "cloudfront-waf-sync-c8adc83b",
+    "Handler": "index.handler",
+    "Role": {
+     "Fn::GetAtt": [
+      "CrossRegionWafSyncFunctionServiceRole85D2F043",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs22.x",
+    "Tags": [
+     {
+      "Key": "Project",
+      "Value": "MCP-Servers-On-AWS"
+     }
+    ],
+    "Timeout": 30
+   },
+   "DependsOn": [
+    "CrossRegionWafSyncFunctionServiceRoleDefaultPolicy8C3D26D7",
+    "CrossRegionWafSyncFunctionServiceRole85D2F043"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "MCP-CloudFront-WAF/CrossRegionWafSyncFunction/Resource",
+    "cdk_nag": {
+     "rules_to_suppress": [
+      {
+       "reason": "Lambda function used by CloudFront WAF cross-region sync custom resource requires CloudWatch logs access",
+       "id": "AwsSolutions-IAM4",
+       "applies_to": [
+        "Policy::arn:<AWS::Partition>:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      },
+      {
+       "reason": "Lambda function used by CloudFront WAF cross-region sync custom resource requires access to SSM parameters using consistent prefix for WAF ARN storage",
+       "id": "AwsSolutions-IAM5",
+       "applies_to": [
+        "Resource::arn:aws:ssm:us-east-1:<AWS::AccountId>:parameter/mcp/cloudfront-waf-*"
+       ]
+      }
+     ]
+    }
+   }
+  },
+  "CrossRegionWafSync": {
+   "Type": "AWS::CloudFormation::CustomResource",
+   "Properties": {
+    "ServiceToken": {
+     "Fn::GetAtt": [
+      "CrossRegionWafSyncFunction89FCBCD2",
+      "Arn"
+     ]
+    },
+    "Timestamp": "1759642672556",
+    "WebAclId": {
+     "Ref": "MCPCloudFrontWAF"
+    },
+    "WebAclArn": {
+     "Fn::GetAtt": [
+      "MCPCloudFrontWAF",
+      "Arn"
+     ]
+    },
+    "ParameterName": "/mcp/cloudfront-waf-arn-c8adc83b",
+    "TargetRegion": "us-east-1"
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "MCP-CloudFront-WAF/CrossRegionWafSync/Default"
+   }
+  },
+  "CDKMetadata": {
+   "Type": "AWS::CDK::Metadata",
+   "Properties": {
+    "Analytics": "v2:deflate64:H4sIAAAAAAAA/0WPSwvCMBCEf4v3dNUgiEcpeBIs9eBRtmkqqXlIHi1S8t9N6us0387sDiwFut7BaoGjK1h7L6RoYDp7ZHeSrOs0YjdQKDt94c2+PBLnVM6t0LcKLSruuSUp/g2RSFRNizAdgmZeGJ3jL0ciMBXURvJsz1oZKdhzLpkpxsyn4B/Bk5o7EyxL28F5o/5jOv5wJNq0HHq3HOgGtumZ3glR2KC9UBzqt74AODc0ZOkAAAA="
+   },
+   "Metadata": {
+    "aws:cdk:path": "MCP-CloudFront-WAF/CDKMetadata/Default"
+   }
+  }
+ },
+ "Outputs": {
+  "CloudFrontWafArn": {
+   "Description": "ARN of the CloudFront WAF Web ACL",
+   "Value": {
+    "Fn::GetAtt": [
+     "MCPCloudFrontWAF",
+     "Arn"
+    ]
+   },
+   "Export": {
+    "Name": "CloudFrontWafArn-c8adc83b"
+   }
+  },
+  "CloudFrontWafArnParamName": {
+   "Description": "SSM Parameter name storing the CloudFront WAF ARN",
+   "Value": "/mcp/cloudfront-waf-arn-c8adc83b"
+  }
+ },
+ "Parameters": {
+  "BootstrapVersion": {
+   "Type": "AWS::SSM::Parameter::Value<String>",
+   "Default": "/cdk-bootstrap/hnb659fds/version",
+   "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]"
+  }
+ },
+ "Rules": {
+  "CheckBootstrapVersion": {
+   "Assertions": [
+    {
+     "Assert": {
+      "Fn::Not": [
+       {
+        "Fn::Contains": [
+         [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5"
+         ],
+         {
+          "Ref": "BootstrapVersion"
+         }
+        ]
+       }
+      ]
+     },
+     "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI."
+    }
+   ]
+  }
+ }
+}

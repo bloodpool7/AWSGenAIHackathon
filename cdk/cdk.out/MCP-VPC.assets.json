@@ -1,0 +1,36 @@
+{
+  "version": "48.0.0",
+  "files": {
+    "7fa1e366ee8a9ded01fc355f704cff92bfd179574e6f9cfee800a3541df1b200": {
+      "displayName": "MCP-VPC/Custom::VpcRestrictDefaultSGCustomResourceProvider Code",
+      "source": {
+        "path": "asset.7fa1e366ee8a9ded01fc355f704cff92bfd179574e6f9cfee800a3541df1b200",
+        "packaging": "zip"
+      },
+      "destinations": {
+        "661235013910-us-east-1-f446cf86": {
+          "bucketName": "cdk-hnb659fds-assets-661235013910-us-east-1",
+          "objectKey": "7fa1e366ee8a9ded01fc355f704cff92bfd179574e6f9cfee800a3541df1b200.zip",
+          "region": "us-east-1",
+          "assumeRoleArn": "arn:${AWS::Partition}:iam::661235013910:role/cdk-hnb659fds-file-publishing-role-661235013910-us-east-1"
+        }
+      }
+    },
+    "b7ddc7e574fe29cd6aa5dec33fe9abec5d00dabf217783e27c605fa423fb69b4": {
+      "displayName": "MCP-VPC Template",
+      "source": {
+        "path": "MCP-VPC.template.json",
+        "packaging": "file"
+      },
+      "destinations": {
+        "661235013910-us-east-1-4d5198f8": {
+          "bucketName": "cdk-hnb659fds-assets-661235013910-us-east-1",
+          "objectKey": "b7ddc7e574fe29cd6aa5dec33fe9abec5d00dabf217783e27c605fa423fb69b4.json",
+          "region": "us-east-1",
+          "assumeRoleArn": "arn:${AWS::Partition}:iam::661235013910:role/cdk-hnb659fds-file-publishing-role-661235013910-us-east-1"
+        }
+      }
+    }
+  },
+  "dockerImages": {}
+}

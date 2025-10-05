@@ -1,0 +1,84 @@
+{
+  "version": "48.0.0",
+  "files": {
+    "faa95a81ae7d7373f3e1f242268f904eb748d8d0fdd306e8a6fe515a1905a7d6": {
+      "displayName": "MCP-Server/Custom::S3AutoDeleteObjectsCustomResourceProvider Code",
+      "source": {
+        "path": "asset.faa95a81ae7d7373f3e1f242268f904eb748d8d0fdd306e8a6fe515a1905a7d6",
+        "packaging": "zip"
+      },
+      "destinations": {
+        "661235013910-us-east-1-14a9be11": {
+          "bucketName": "cdk-hnb659fds-assets-661235013910-us-east-1",
+          "objectKey": "faa95a81ae7d7373f3e1f242268f904eb748d8d0fdd306e8a6fe515a1905a7d6.zip",
+          "region": "us-east-1",
+          "assumeRoleArn": "arn:${AWS::Partition}:iam::661235013910:role/cdk-hnb659fds-file-publishing-role-661235013910-us-east-1"
+        }
+      }
+    },
+    "f91d9ade5b852afe397a287eb81835bacae6fdf6f040cf1f0fc6b70d907e0fa6": {
+      "displayName": "MCP-Server Template",
+      "source": {
+        "path": "MCP-Server.template.json",
+        "packaging": "file"
+      },
+      "destinations": {
+        "661235013910-us-east-1-f28f6b0f": {
+          "bucketName": "cdk-hnb659fds-assets-661235013910-us-east-1",
+          "objectKey": "f91d9ade5b852afe397a287eb81835bacae6fdf6f040cf1f0fc6b70d907e0fa6.json",
+          "region": "us-east-1",
+          "assumeRoleArn": "arn:${AWS::Partition}:iam::661235013910:role/cdk-hnb659fds-file-publishing-role-661235013910-us-east-1"
+        }
+      }
+    }
+  },
+  "dockerImages": {
+    "7d4d4458c07f239d360686ee39320c2a4e41c0f89eac8986b62dbb86e598d455": {
+      "displayName": "WeatherNodeJsServer/WeatherNodeJsImage",
+      "source": {
+        "directory": "asset.7d4d4458c07f239d360686ee39320c2a4e41c0f89eac8986b62dbb86e598d455",
+        "dockerBuildArgs": {},
+        "platform": "linux/amd64"
+      },
+      "destinations": {
+        "661235013910-us-east-1-e8af335e": {
+          "repositoryName": "cdk-hnb659fds-container-assets-661235013910-us-east-1",
+          "imageTag": "7d4d4458c07f239d360686ee39320c2a4e41c0f89eac8986b62dbb86e598d455",
+          "region": "us-east-1",
+          "assumeRoleArn": "arn:${AWS::Partition}:iam::661235013910:role/cdk-hnb659fds-image-publishing-role-661235013910-us-east-1"
+        }
+      }
+    },
+    "48010a6860345614f0c093d1627e1adc0699b903f0bd27b6e34576fa3d6ab110": {
+      "displayName": "OnshapeMCPServer/OnshapeMCPImage",
+      "source": {
+        "directory": "asset.48010a6860345614f0c093d1627e1adc0699b903f0bd27b6e34576fa3d6ab110",
+        "dockerBuildArgs": {},
+        "platform": "linux/amd64"
+      },
+      "destinations": {
+        "661235013910-us-east-1-521b835e": {
+          "repositoryName": "cdk-hnb659fds-container-assets-661235013910-us-east-1",
+          "imageTag": "48010a6860345614f0c093d1627e1adc0699b903f0bd27b6e34576fa3d6ab110",
+          "region": "us-east-1",
+          "assumeRoleArn": "arn:${AWS::Partition}:iam::661235013910:role/cdk-hnb659fds-image-publishing-role-661235013910-us-east-1"
+        }
+      }
+    },
+    "9b839136648fdf80b3edbf74e50b18aebca048190410b944c5a3571298e07f40": {
+      "displayName": "WeatherNodeJsLambda/AssetImage",
+      "source": {
+        "directory": "asset.9b839136648fdf80b3edbf74e50b18aebca048190410b944c5a3571298e07f40",
+        "platform": "linux/amd64"
+      },
+      "destinations": {
+        "661235013910-us-east-1-3fc08e46": {
+          "repositoryName": "cdk-hnb659fds-container-assets-661235013910-us-east-1",
+          "imageTag": "9b839136648fdf80b3edbf74e50b18aebca048190410b944c5a3571298e07f40",
+          "region": "us-east-1",
+          "assumeRoleArn": "arn:${AWS::Partition}:iam::661235013910:role/cdk-hnb659fds-image-publishing-role-661235013910-us-east-1"
+        }
+      }
+    }
+  }
+}
