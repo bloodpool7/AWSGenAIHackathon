@@ -4,6 +4,7 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import { writeFileSync, readFileSync, unlinkSync } from 'fs';
 import { execSync } from 'child_process';
+import { TextContent, CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 
 
 const app = express();
@@ -446,7 +447,7 @@ The system will automatically:
 2. Convert it to STL using OpenSCAD
 3. Import it to Onshape
 
-Just write the OpenSCAD code and explain what you created! At the end, link the Onshape document to the user.`
+Just write the OpenSCAD code and explain what you created!`
         }],
         ...(availableTools.length > 0 && {
           toolConfig: {
@@ -630,12 +631,13 @@ Just write the OpenSCAD code and explain what you created! At the end, link the 
             stl_content: stlContent,
             document_name: documentName
           }
-        });
+        }) as CallToolResult;
         
         console.log('Import completed!', importResult);
         
         // Send success message
-        const successMessage = `\n\n✅ STL generated and imported to Onshape as "${documentName}"!`;
+        const firstContent = importResult.content[0] as TextContent;
+        const successMessage = `\n\n${firstContent.text}`;
         res.write(`data: ${JSON.stringify({ type: 'text', content: successMessage })}\n\n`);
         
         res.write(`data: ${JSON.stringify({ 
