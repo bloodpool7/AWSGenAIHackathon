@@ -71,12 +71,16 @@ export function Chat() {
         const chunk = decoder.decode(value)
         const lines = chunk.split("\n")
 
-        for (const line of lines) {
+              for (const line of lines) {
           if (line.startsWith("data: ")) {
             try {
               const data = JSON.parse(line.slice(6))
 
               if (data.type === "text") {
+                // Clear tool status when we start getting text response
+                if (toolStatus) {
+                  setToolStatus(null)
+                }
                 accumulatedContent += data.content
                 setStreamingContent(accumulatedContent)
               } else if (data.type === "tool_use") {
@@ -84,7 +88,6 @@ export function Chat() {
                   setToolStatus(`Using tool: ${data.tool}...`)
                 } else if (data.status === "completed") {
                   setToolStatus(`Tool ${data.tool} completed`)
-                  setTimeout(() => setToolStatus(null), 2000)
                 }
               } else if (data.type === "done") {
                 // Finalize the message
