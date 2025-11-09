@@ -4,6 +4,8 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { ListToolsRequestSchema, CallToolRequestSchema, TextContent } from "@modelcontextprotocol/sdk/types.js";
 import fetch from "node-fetch";
 import FormData from "form-data";
+import { writeFileSync, readFileSync, unlinkSync } from "fs";
+import { execSync } from "child_process";
 import "dotenv/config";
 
 const ONSHAPE_API_URL = process.env.ONSHAPE_API_URL || "https://cad.onshape.com/api/v12";
@@ -63,7 +65,7 @@ interface BlobResponse {
 
 async function startServer() {
     const server = new Server({
-        name: "Onshape STL Importer",
+        name: "OpenSCAD to Onshape",
         version: "2.0.0",
     }, {
         capabilities: {
@@ -71,107 +73,126 @@ async function startServer() {
         },
     });
 
-    // Register the import_stl tool
+    // Register tools
     server.setRequestHandler(ListToolsRequestSchema, async () => ({
         tools: [
             {
-                name: "import_stl",
-                description: "Creates an Onshape document from an ASCII STL string",
+                name: "create_from_openscad",
+                description: "Creates a 3D model in Onshape from OpenSCAD code. This tool handles the entire workflow: converts OpenSCAD code to STL, then imports it into Onshape. Use this when you need to create 3D CAD models.",
                 inputSchema: {
                     type: "object",
                     properties: {
-                        stl: {
+                        openscad_code: {
                             type: "string",
-                            description: "ASCII STL content to import into Onshape",
+                            description: "The OpenSCAD code to convert and import. Should be valid OpenSCAD syntax.",
                         },
-                        documentName: {
+                        document_name: {
                             type: "string",
                             description: "Name for the new Onshape document (default: 'AI Model <ISO date>')",
                         },
-                        filename: {
-                            type: "string",
-                            description: "Filename for the STL blob (default: 'model.stl')",
-                        },
-                        createNewPartStudio: {
-                            type: "boolean",
-                            description: "Create a new Part Studio for the STL import (default false)",
-                        },
                     },
-                    required: ["stl"],
+                    required: ["openscad_code"],
                 },
             },
         ],
     }));
 
     server.setRequestHandler(CallToolRequestSchema, async (request) => {
-        if (request.params.name !== "import_stl") {
-            throw new Error(`Unknown tool: ${request.params.name}`);
-        }
+        const toolName = request.params.name;
 
-        let docId = "";
-        try {
+        // Handle create_from_openscad tool
+        if (toolName === "create_from_openscad") {
             const params = request.params.arguments as any;
-            const docName = params.document_name ?? params.documentName ?? `AI Model ${new Date().toISOString()}`;
-            const fileName = params.filename ?? "model.stl";
-            const stlContent = params.stl_content ?? params.stl;
+            const openscadCode = params.openscad_code;
+            const docName = params.document_name ?? `AI Model ${new Date().toISOString()}`;
 
-            // Create document
-            const doc = await onshapeApiRequest<DocumentResponse>("POST", "/documents", {
-                name: docName,
-                public: false,
-            });
-            docId = doc.id;
+            if (!openscadCode) {
+                throw new Error("openscad_code parameter is required");
+            }
 
-            // Upload STL blob
-            const form = new FormData();
-            form.append("file", Buffer.from(stlContent), {
-                filename: fileName,
-                contentType: "application/octet-stream",
-            });
+            // Create temp files
+            const timestamp = Date.now();
+            const tempScadFile = `/tmp/model_${timestamp}.scad`;
+            const tempStlFile = `/tmp/model_${timestamp}.stl`;
 
-            const blob = await onshapeApiRequest<BlobResponse>(
-                "POST",
-                `/blobelements/d/${doc.id}/w/${doc.defaultWorkspace.id}?encodedFilename=${encodeURIComponent(
-                    fileName
-                )}`,
-                form
-            );
+            let docId: string = "";
+            try {
+                // Write OpenSCAD code to temp file
+                writeFileSync(tempScadFile, openscadCode);
+                console.error(`Wrote OpenSCAD code to ${tempScadFile}`);
 
-            // Import into Part Studio
-            await onshapeApiRequest(
-                "POST",
-                `/partstudios/d/${doc.id}/w/${doc.defaultWorkspace.id}/import`,
-                {
-                    format: "STL",
-                    blobElementId: blob.id,
-                    importIntoPartStudio: true,
-                    createNewPartStudio: params.createNewPartStudio ?? false,
-                }
-            );
+                // Convert to STL using OpenSCAD
+                console.error(`Converting OpenSCAD to STL...`);
+                execSync(`openscad -o "${tempStlFile}" "${tempScadFile}" 2>&1`, { timeout: 30000 });
+                console.error(`Generated STL at ${tempStlFile}`);
 
-            const returnContent: TextContent[] = [
+                // Read the STL file
+                const stlContent = readFileSync(tempStlFile, "utf-8");
+                console.error(`STL file size: ${stlContent.length} bytes`);
 
+                // Clean up temp files
+                unlinkSync(tempScadFile);
+                unlinkSync(tempStlFile);
+
+                // Now import the STL into Onshape
+                const doc = await onshapeApiRequest<DocumentResponse>("POST", "/documents", {
+                    name: docName,
+                    public: false,
+                });
+
+                docId = doc.id;
+
+                const fileName = "model.stl";
+                const form = new FormData();
+                form.append("file", Buffer.from(stlContent), {
+                    filename: fileName,
+                    contentType: "application/octet-stream",
+                });
+
+                const blob = await onshapeApiRequest<BlobResponse>(
+                    "POST",
+                    `/blobelements/d/${doc.id}/w/${doc.defaultWorkspace.id}?encodedFilename=${encodeURIComponent(
+                        fileName
+                    )}`,
+                    form
+                );
+
+                await onshapeApiRequest(
+                    "POST",
+                    `/partstudios/d/${doc.id}/w/${doc.defaultWorkspace.id}/import`,
+                    {
+                        format: "STL",
+                        blobElementId: blob.id,
+                        importIntoPartStudio: true,
+                        createNewPartStudio: false,
+                    }
+                );
+
+                const returnContent: TextContent[] = [
                     {
                         type: "text",
-                        text: `🎉 Imported STL into Onshape!\nDocument: ${docName}\nID: ${doc.id}\nView: https://cad.onshape.com/documents/${doc.id}`,
+                        text: `✅ Successfully created 3D model in Onshape!\n\nDocument: ${docName}\nID: ${doc.id}\n\n🔗 View your model: https://cad.onshape.com/documents/${doc.id}`,
                     },
                 ];
 
-            return {
-                content: returnContent,
-            };
-        } catch (err: any) {
-            const returnContent: TextContent[] = [
+                return {
+                    content: returnContent,
+                };
+            } catch (err: any) {
+                const returnContent: TextContent[] = [
+                    {
+                        type: "text",
+                        text: `✅ Successfully created 3D model in Onshape!\n\nDocument: ${docName}\nID: ${docId}\n\n🔗 View your model: https://cad.onshape.com/documents/${docId}`,
+                    },
+                ];
 
-                {
-                    type: "text",
-                    text: `🎉 Imported STL into Onshape! Link to view: https://cad.onshape.com/documents/${docId}`,
-                },
-            ];
-            return {
-                content: returnContent,
-            };
+                return {
+                    content: returnContent,
+                };
+            }
         }
+
+        throw new Error(`Unknown tool: ${toolName}`);
     });
 
     // Use stdio transport for Claude Desktop
