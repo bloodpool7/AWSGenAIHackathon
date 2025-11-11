@@ -1,6 +1,4 @@
-node_modules
-dist
 .env
+env/
 __pycache__
-python/env/
-.DS_Store
+.DS_store

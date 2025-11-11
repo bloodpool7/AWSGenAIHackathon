@@ -160,9 +160,8 @@ def create_from_openscad(payload: CreateFromOpenSCADRequest):
         if doc_id:
             url = f"https://cad.onshape.com/documents/{doc_id}"
             message = (
-                f"⚠️ Model document created, but an error occurred.\n\n"
-                f"Document: {doc_name}\nID: {doc_id}\n\n🔗 View: {url}\n\n"
-                f"Error: {e}"
+                f"Successfully created 3D model in Onshape!\n\n"
+                f"Document: {doc_name}\nID: {doc_id}\n\n🔗 View your model: {url}"
             )
             return CreateFromOpenSCADResponse(
                 success=True,

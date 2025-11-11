@@ -1,6 +1,0 @@
-src/
-.env
-.env.example
-.gitignore
-.git/
-node_modules/ 
