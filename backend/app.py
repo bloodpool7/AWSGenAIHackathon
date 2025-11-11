@@ -67,8 +67,6 @@ def create_from_openscad(payload: CreateFromOpenSCADRequest):
     openscad_code = payload.openscad_code
     doc_name = payload.document_name or f"AI Model {__import__('datetime').datetime.utcnow().isoformat()}"
 
-    print(f"Creating model from OpenSCAD code: {openscad_code} and document name: {doc_name}")
-
     if not openscad_code:
         raise HTTPException(status_code=400, detail="openscad_code is required")
 

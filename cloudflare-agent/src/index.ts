@@ -55,7 +55,6 @@ import {
   
 	  // whatever your FastAPI returns: { success, docId, url, message, ... }
 	  const response = await res.json();
-	  console.log("createFromOpenSCAD response:", response);
 	  return response;
 	},
   });
